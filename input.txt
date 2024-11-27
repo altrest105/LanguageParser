@@ -1,0 +1,4 @@
+operand _example <= key = % x 10D and if <== >= while 1e5 .1e+5 2.e+2 10p
+fgfgfg
+	fgfgf
+fgfgf

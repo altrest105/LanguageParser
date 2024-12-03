@@ -109,7 +109,7 @@ class Lexer:
                 self.state = 'EQ1'
                 delim = self.current_char
                 self.next()
-                if (self.current_char == '>') or (self.current_char == '='):
+                if self.current_char in {'>', '='}:
                     delim += self.current_char
                     self.state = 'EQ'
                     self.next()
@@ -136,21 +136,21 @@ class Lexer:
                 self.state = 'H'
 
             # Обработка операций +, -, * (OP)
-            elif (self.current_char == '+') or (self.current_char == '-') or (self.current_char == '*'):
+            elif self.current_char in {'+', '-', '*'}:
                 self.state = 'OP'
                 self.add('DELIMITER', self.current_char)
                 self.next()
                 self.state = 'H'
 
             # Обработка типов (TYPE)
-            elif (self.current_char == '%') or (self.current_char == '!') or (self.current_char == '$'):
+            elif self.current_char in {'%', '!', '$'}:
                 self.state = 'OP'
                 self.add('DELIMITER', self.current_char)
                 self.next()
                 self.state = 'H'
 
             # Обработка скобок (DELIM)
-            elif (self.current_char == '(') or (self.current_char == ')') or (self.current_char == '[') or (self.current_char == ']') or (self.current_char == '{') or (self.current_char == '}'):
+            elif self.current_char in {'(', ')', '[', ']', '{', '}', ';', ':'}:
                 self.state = 'DELIM'
                 self.add('DELIMITER', self.current_char)
                 self.next()

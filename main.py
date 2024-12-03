@@ -238,28 +238,28 @@ class Lexer:
             # Обработка знака равно (EQ)
             elif self.current_char == '=':
                 self.state = 'EQ'
-                self.add(lexems[delim], self.current_char)
+                self.add(lexems[self.current_char], self.current_char)
                 self.next()
                 self.state = 'H'
 
             # Обработка операций +, -, * (OP)
             elif self.current_char in {'+', '-', '*'}:
                 self.state = 'OP'
-                self.add(lexems[delim], self.current_char)
+                self.add(lexems[self.current_char], self.current_char)
                 self.next()
                 self.state = 'H'
 
             # Обработка типов (TYPE)
             elif self.current_char in {'%', '!', '$'}:
                 self.state = 'OP'
-                self.add(lexems[delim], self.current_char)
+                self.add(lexems[self.current_char], self.current_char)
                 self.next()
                 self.state = 'H'
 
             # Обработка скобок (DELIM)
             elif self.current_char in {'(', ')', '[', ']', '{', '}', ';', ':', ','}:
                 self.state = 'DELIM'
-                self.add(lexems[delim], self.current_char)
+                self.add(lexems[self.current_char], self.current_char)
                 self.next()
                 self.state = 'H'
             

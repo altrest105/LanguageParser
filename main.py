@@ -148,6 +148,13 @@ class Lexer:
                 self.add('DELIMITER', self.current_char)
                 self.next()
                 self.state = 'H'
+
+            # Обработка скобок (DELIM)
+            elif (self.current_char == '(') or (self.current_char == ')') or (self.current_char == '[') or (self.current_char == ']') or (self.current_char == '{') or (self.current_char == '}'):
+                self.state = 'DELIM'
+                self.add('DELIMITER', self.current_char)
+                self.next()
+                self.state = 'H'
             
             # Обработка неизвестных символов
             else:

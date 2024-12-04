@@ -258,6 +258,8 @@ class Lexer:
                             else:
                                 self.state = 'COM2'
                             
+                        if self.current_char == '\n':
+                            self.y += 1
                         self.next()
                     else:
                         error_message('An unclosed comment was found', self.x, self.y)
@@ -364,11 +366,25 @@ class Parser:
 
     # <описание> ::= <тип> <идентификатор> { , <идентификатор> }
     def parse_description(self):
+        id_type = self.current_token[1]
         self.parse_type()
+        id = self.current_token[1]
+        x = self.current_token[2]
+        y = self.current_token[3]
         self.expect(1) # IDENTIFIER
+        if id in self.symbol_table:
+            error_message(f'Identifier «{id}» is already defined', x, y)
+        self.symbol_table[id] = id_type
+
         while self.current_token and self.current_token[0] == 39: # ,
             self.next_token()
+            id = self.current_token[1]
+            x = self.current_token[2]
+            y = self.current_token[3]
             self.expect(1) # IDENTIFIER
+            if id in self.symbol_table:
+                error_message(f'Identifier «{id}» is already defined', x, y)
+            self.symbol_table[id] = id_type
 
     # <тип> ::= % | ! | $
     def parse_type(self):
@@ -410,7 +426,12 @@ class Parser:
 
     # <присваивания> ::= <идентификатор> as <выражение>
     def parse_assignment(self):
+        id = self.current_token[1]
+        x = self.current_token[2]
+        y = self.current_token[3]
         self.expect(1)  # IDENTIFIER
+        if id not in self.symbol_table:
+            error_message(f'Undefined identifier «{id}»', x, y)
         self.expect(6)  # as
         self.parse_expression()
 
@@ -444,10 +465,20 @@ class Parser:
     def parse_input(self):
         self.expect(14)  # read
         self.expect(31)  # (
+        id = self.current_token[1]
+        x = self.current_token[2]
+        y = self.current_token[3]
         self.expect(1)  # IDENTIFIER
+        if id not in self.symbol_table:
+            error_message(f'Undefined identifier «{id}»', x, y)
         while self.current_token and self.current_token[0] == 39:  # ,
             self.next_token()
+            id = self.current_token[1]
+            x = self.current_token[2]
+            y = self.current_token[3]
             self.expect(1)  # IDENTIFIER
+            if id not in self.symbol_table:
+                error_message(f'Undefined identifier «{id}»', x, y)
         self.expect(32)  # )
 
     # <вывода> ::= write «(»<выражение> {, <выражение> } «)»
@@ -484,6 +515,11 @@ class Parser:
     # <множитель> ::= <идентификатор> | <число> | <логическая_константа> | <унарная_операция> <множитель> | «(»<выражение>«)»
     def parse_factor(self):
         if self.current_token[0] == 1:  # IDENTIFIER
+            id = self.current_token[1]
+            x = self.current_token[2]
+            y = self.current_token[3]
+            if id not in self.symbol_table:
+                error_message(f'Undefined identifier «{id}»', x, y)
             self.next_token()
         elif self.current_token[0] == 2:  # NUMBER
             self.next_token()

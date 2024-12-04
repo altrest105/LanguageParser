@@ -94,6 +94,58 @@ lexems = {
     ',': 39,
 }
 
+values = {
+    # Ошибка
+    0: 'None',
+
+    # Идентификаторы
+    1: 'identifier',
+
+    # Числа
+    2: 'number',
+
+    # Ключевые слова
+    3: 'not',
+    4: 'or',
+    5: 'and',
+    6: 'as',
+    7: 'if',
+    8: 'then',
+    9: 'else',
+    10: 'for',
+    11: 'to',
+    12: 'do',
+    13: 'while',
+    14: 'read',
+    15: 'write',
+    16: 'true',
+    17: 'false',
+    
+    # Разделители
+    18: '/',
+    19: '+',
+    20: '-',
+    21: '*',
+    22: '<>',
+    23: '==',
+    24: '<',
+    25: '<=',
+    26: '>',
+    27: '>=',
+    28: '%',
+    29: '!',
+    30: '$',
+    31: '(',
+    32: ')',
+    33: '[',
+    34: ']',
+    35: '{',
+    36: '}',
+    37: ';',
+    38: ':',
+    39: ',',
+}
+
 def error_message(message, index, line):
     print(f'[ERROR] {message} at line {line}, position {index}')
     exit(1)
@@ -182,7 +234,7 @@ class Lexer:
                     self.add(lexems['NUMBER'], number)
                 else:
                     self.add(0, number)
-                    error_message(f'An unexpected number "{number}" was encountered', self.x, self.y)
+                    error_message(f'An unexpected number "{number}" was received', self.x, self.y)
                 self.state = 'H'
             
             # Обработка комментариев и деления (OP+COM2+COM3)
@@ -294,7 +346,7 @@ class Parser:
         if self.current_token[0] == token_type:
             self.next_token()
         else:
-            error_message(f'Unexpected token {self.current_token[1]}', self.current_token[2], self.current_token[3])
+            error_message(f'Received «{self.current_token[1]}», but expected «{values[token_type]}»', self.current_token[2], self.current_token[3])
 
     # <описание> ::= <тип> <идентификатор> { , <идентификатор> }
     def parse_program(self):
@@ -321,7 +373,7 @@ class Parser:
         if self.current_token[0] in (28, 29, 30): # %, !, $
             self.next_token()
         else:
-            error_message(f'Unexpected token {self.current_token[1]}', self.current_token[2], self.current_token[3])
+            error_message(f'Received «{self.current_token[1]}», but expected type of identifier', self.current_token[2], self.current_token[3])
 
     # <оператор> ::= <составной> | <присваивания> | <условный> | <фиксированного_цикла> | <условного_цикла> | <ввода> | <вывода>
     def parse_operator(self):
@@ -340,14 +392,17 @@ class Parser:
         elif self.current_token[0] == 15: # write
             self.parse_output()
         else:
-            error_message(f'Unexpected token {self.current_token[1]}', self.current_token[2], self.current_token[3])
+            error_message(f'Received «{self.current_token[1]}», but expected operator', self.current_token[2], self.current_token[3])
 
     # <составной> ::= «[» <оператор> { ( : | перевод строки) <оператор> } «]»
     def parse_compound(self):
         self.expect(33) # [
         self.parse_operator()
-        while self.current_token and self.current_token[0] in (38, '\n'): # : или \n
-            self.next_token()
+        prev = self.tokens[self.position-1][3]
+        while self.current_token and ((self.current_token[0] == 38) or self.current_token[3] > prev) and (self.current_token[0] != 34): # : или \n
+            if self.current_token[0] == 38:
+                self.next_token()
+            prev = self.current_token[3]
             self.parse_operator()
         self.expect(34) # ]
 
@@ -440,7 +495,7 @@ class Parser:
             self.parse_expression()
             self.expect(32)  # )
         else:
-            error_message(f'Unexpected token {self.current_token[1]}', self.current_token[2], self.current_token[3])
+            error_message(f'Received «{self.current_token[1]}», but expected factor', self.current_token[2], self.current_token[3])
 
 
 if __name__ == '__main__':

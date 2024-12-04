@@ -1,4 +1,18 @@
-operand _example <= key = % x 10D and if <== >= while 1e5 .1e+5 2.e+2 10p
-fgfgfg
-	fgfgf
-fgfgf
+{
+    % a, b;
+    ! x, y;
+    a as 5;
+    b as 10;
+    if a < b then
+        a as a + 1
+    else
+        b as b - 1;
+    for a as 0 to 10 do [
+        a as a + 1:
+        b as b + 1
+    ];
+    while a > 0 do
+        a as a - 1;
+    read (a, b);
+    write (a, b);
+}

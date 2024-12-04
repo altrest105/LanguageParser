@@ -335,6 +335,8 @@ class Parser:
         self.position = 0
         self.current_token = tokens[self.position]
 
+        self.symbol_table = {}
+
     def next_token(self):
         self.position += 1
         if self.position < len(self.tokens):
@@ -343,12 +345,12 @@ class Parser:
             self.current_token = None
 
     def expect(self, token_type):
-        if self.current_token[0] == token_type:
+        if self.current_token and self.current_token[0] == token_type:
             self.next_token()
         else:
             error_message(f'Received «{self.current_token[1]}», but expected «{values[token_type]}»', self.current_token[2], self.current_token[3])
 
-    # <описание> ::= <тип> <идентификатор> { , <идентификатор> }
+    # <программа> ::= «{» {/ (<описание> | <оператор>) ; /} «}»
     def parse_program(self):
         self.expect(35) # {
         while self.current_token and self.current_token[0] not in (36, None): # not }

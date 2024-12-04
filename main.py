@@ -98,6 +98,9 @@ def error_message(message, index, line):
     print(f'[ERROR] {message} at line {line}, position {index}')
     exit(1)
 
+def good_message():
+    print('[INFO] Program is correct!')
+
 class Lexer:
     def __init__(self, input):
         self.input = input
@@ -274,10 +277,180 @@ class Lexer:
         return self.tokens
 
 
+class Parser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.position = 0
+        self.current_token = tokens[self.position]
+
+    def next_token(self):
+        self.position += 1
+        if self.position < len(self.tokens):
+            self.current_token = self.tokens[self.position]
+        else:
+            self.current_token = None
+
+    def expect(self, token_type):
+        if self.current_token[0] == token_type:
+            self.next_token()
+        else:
+            error_message(f'Unexpected token {self.current_token[1]}', self.current_token[2], self.current_token[3])
+
+    # <описание> ::= <тип> <идентификатор> { , <идентификатор> }
+    def parse_program(self):
+        self.expect(35) # {
+        while self.current_token and self.current_token[0] not in (36, None): # not }
+            if self.current_token[0] in (28, 29, 30):
+                self.parse_description() # %, !, $
+            else:
+                self.parse_operator()
+            self.expect(37) # ;
+        self.expect(36) # }
+        good_message()
+
+    # <описание> ::= <тип> <идентификатор> { , <идентификатор> }
+    def parse_description(self):
+        self.parse_type()
+        self.expect(1) # IDENTIFIER
+        while self.current_token and self.current_token[0] == 39: # ,
+            self.next_token()
+            self.expect(1) # IDENTIFIER
+
+    # <тип> ::= % | ! | $
+    def parse_type(self):
+        if self.current_token[0] in (28, 29, 30): # %, !, $
+            self.next_token()
+        else:
+            error_message(f'Unexpected token {self.current_token[1]}', self.current_token[2], self.current_token[3])
+
+    # <оператор> ::= <составной> | <присваивания> | <условный> | <фиксированного_цикла> | <условного_цикла> | <ввода> | <вывода>
+    def parse_operator(self):
+        if self.current_token[0] == 33: # [
+            self.parse_compound()
+        elif self.current_token[0] == 1: # IDENTIFIER
+            self.parse_assignment()
+        elif self.current_token[0] == 7: # if
+            self.parse_conditional()
+        elif self.current_token[0] == 10: # for
+            self.parse_fixed_loop()
+        elif self.current_token[0] == 13: # while
+            self.parse_while_loop()
+        elif self.current_token[0] == 14: # read
+            self.parse_input()
+        elif self.current_token[0] == 15: # write
+            self.parse_output()
+        else:
+            error_message(f'Unexpected token {self.current_token[1]}', self.current_token[2], self.current_token[3])
+
+    # <составной> ::= «[» <оператор> { ( : | перевод строки) <оператор> } «]»
+    def parse_compound(self):
+        self.expect(33) # [
+        self.parse_operator()
+        while self.current_token and self.current_token[0] in (38, '\n'): # : или \n
+            self.next_token()
+            self.parse_operator()
+        self.expect(34) # ]
+
+    # <присваивания> ::= <идентификатор> as <выражение>
+    def parse_assignment(self):
+        self.expect(1)  # IDENTIFIER
+        self.expect(6)  # as
+        self.parse_expression()
+
+    # <условный> ::= if <выражение> then <оператор> [else <оператор>]
+    def parse_conditional(self):
+        self.expect(7)  # if
+        self.parse_expression()
+        self.expect(8)  # then
+        self.parse_operator()
+        if self.current_token and self.current_token[0] == 9:  # else
+            self.next_token()
+            self.parse_operator()
+
+    # <фиксированного_цикла> ::= for <присваивания> to <выражение> do <оператор>
+    def parse_fixed_loop(self):
+        self.expect(10)  # for
+        self.parse_assignment()
+        self.expect(11)  # to
+        self.parse_expression()
+        self.expect(12)  # do
+        self.parse_operator()
+
+    # <условного_цикла> ::= while <выражение> do <оператор>
+    def parse_while_loop(self):
+        self.expect(13)  # while
+        self.parse_expression()
+        self.expect(12)  # do
+        self.parse_operator()
+
+    # <ввода> ::= read «(»<идентификатор> {, <идентификатор> } «)»
+    def parse_input(self):
+        self.expect(14)  # read
+        self.expect(31)  # (
+        self.expect(1)  # IDENTIFIER
+        while self.current_token and self.current_token[0] == 39:  # ,
+            self.next_token()
+            self.expect(1)  # IDENTIFIER
+        self.expect(32)  # )
+
+    # <вывода> ::= write «(»<выражение> {, <выражение> } «)»
+    def parse_output(self):
+        self.expect(15)  # write
+        self.expect(31)  # (
+        self.parse_expression()
+        while self.current_token and self.current_token[0] == 39:  # ,
+            self.next_token()
+            self.parse_expression()
+        self.expect(32)  # )
+
+    # <выражение> ::= <операнд> {<операции_группы_отношения> <операнд>}
+    def parse_expression(self):
+        self.parse_operand()
+        while self.current_token and self.current_token[0] in (22, 23, 24, 25, 26, 27): # <>, =, <, <=, >, >=
+            self.next_token()
+            self.parse_operand()
+
+    # <операнд> ::= <слагаемое> {<операции_группы_сложения> <слагаемое>}
+    def parse_operand(self):
+        self.parse_term()
+        while self.current_token and self.current_token[0] in (19, 20, 4):  # +, -, or
+            self.next_token()
+            self.parse_term()
+
+    # <слагаемое> ::= <множитель> {<операции_группы_умножения> <множитель>}
+    def parse_term(self):
+        self.parse_factor()
+        while self.current_token and self.current_token[0] in (21, 18, 5):  # *, /, and
+            self.next_token()
+            self.parse_factor()
+
+    # <множитель> ::= <идентификатор> | <число> | <логическая_константа> | <унарная_операция> <множитель> | «(»<выражение>«)»
+    def parse_factor(self):
+        if self.current_token[0] == 1:  # IDENTIFIER
+            self.next_token()
+        elif self.current_token[0] == 2:  # NUMBER
+            self.next_token()
+        elif self.current_token[0] in (16, 17):  # true, false
+            self.next_token()
+        elif self.current_token[0] == 3:  # not
+            self.next_token()
+            self.parse_factor()
+        elif self.current_token[0] == 31:  # (
+            self.next_token()
+            self.parse_expression()
+            self.expect(32)  # )
+        else:
+            error_message(f'Unexpected token {self.current_token[1]}', self.current_token[2], self.current_token[3])
+
+
 if __name__ == '__main__':
     with open('input.txt') as file:
         code = file.read()
+    
+    # Лексический анализ
     lexer = Lexer(code)
     tokens = lexer.lex()
-    for token in tokens:
-        print(token)
+
+    # Синтаксический анализ
+    parser = Parser(tokens)
+    parser.parse_program()

@@ -150,8 +150,8 @@ def error_message(message, index, line):
     print(f'[ERROR] {message} at line {line}, position {index}')
     exit(1)
 
-def good_message():
-    print('[INFO] Program is correct!')
+def info_message(message):
+    print(f'[INFO] {message}')
 
 class Lexer:
     def __init__(self, input):
@@ -198,7 +198,7 @@ class Lexer:
         return value in keywords
     
     def add(self, group_number, value):
-        self.tokens.append((group_number, value, self.x-len(value), self.y))
+        self.tokens.append((group_number, value, self.x-len(value)-1, self.y))
 
     def lex(self):
         while self.current_char is not None:
@@ -362,7 +362,7 @@ class Parser:
                 self.parse_operator()
             self.expect(37) # ;
         self.expect(36) # }
-        good_message()
+        info_message('Program is correct!')
 
     # <описание> ::= <тип> <идентификатор> { , <идентификатор> }
     def parse_description(self):

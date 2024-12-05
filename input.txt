@@ -3,12 +3,15 @@
     ! x, y;
     a as 5;
     b as 10;
-    if a < b then
+    if a < b then /*
+fgfgfgf
+rhrht
+*/
         a as a + 1
     else
         b as b - 1;
     for a as 0 to 10 do [
-        a as a + 1:
+        a as a + 1
         b as b + 1
     ];
     while a > 0 do

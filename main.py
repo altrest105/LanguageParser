@@ -350,7 +350,10 @@ class Parser:
         if self.current_token and self.current_token[0] == token_type:
             self.next_token()
         else:
-            error_message(f'Received «{self.current_token[1]}», but expected «{values[token_type]}»', self.current_token[2], self.current_token[3])
+            if self.current_token is not None:
+                error_message(f'Received «{self.current_token[1]}», but expected «{values[token_type]}»', self.current_token[2], self.current_token[3])
+            else:
+                error_message(f'Unexpected end of file', self.tokens[-1][2], self.tokens[-1][3])
 
     # <программа> ::= «{» {/ (<описание> | <оператор>) ; /} «}»
     def parse_program(self):
